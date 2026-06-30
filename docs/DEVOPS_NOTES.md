@@ -72,4 +72,4 @@ kubectl logs deployment/backend-deployment
 
 ## GitHub Actions CI
 
-GitHub Actions installs dependencies, builds the frontend, builds Docker images, and checks Kubernetes YAML with a client-side dry run. It does not deploy anywhere.
+GitHub Actions installs dependencies, builds the frontend, builds Docker images, and checks Kubernetes YAML syntax without requiring a live cluster. It does not deploy anywhere.

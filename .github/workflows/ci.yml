@@ -14,8 +14,10 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up kubectl
-        uses: azure/setup-kubectl@v4
+      - name: Set up Ruby for YAML validation
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.3"
 
       - name: Install backend dependencies
         working-directory: backend
@@ -32,8 +34,8 @@ jobs:
       - name: Validate Docker Compose config
         run: docker compose config
 
-      - name: Validate Kubernetes manifests
-        run: kubectl apply --dry-run=client --validate=false -f k8s/
+      - name: Validate Kubernetes YAML syntax
+        run: ruby -e 'require "yaml"; Dir["k8s/*.yml"].sort.each { |file| YAML.load_file(file); puts "valid yaml: #{file}" }'
 
       - name: Build backend image
         run: docker build -t fullstack-backend:test ./backend

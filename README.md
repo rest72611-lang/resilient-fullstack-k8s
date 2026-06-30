@@ -20,7 +20,7 @@ flowchart LR
     ci[GitHub Actions CI] --> deps[Install dependencies]
     deps --> appBuild[Build frontend]
     appBuild --> dockerBuild[Build Docker images]
-    dockerBuild --> yamlCheck[Validate Docker Compose and Kubernetes manifests]
+    dockerBuild --> yamlCheck[Validate Docker Compose config and Kubernetes YAML syntax]
     yamlCheck --> manifests[Kubernetes manifests]
 ```
 
@@ -220,7 +220,7 @@ The GitHub Actions workflow is intentionally practical and simple:
 - Installs frontend dependencies.
 - Builds the frontend.
 - Validates Docker Compose config.
-- Runs a client-side Kubernetes manifest dry run.
+- Checks Kubernetes manifest YAML syntax without requiring a live cluster.
 - Builds backend and frontend Docker images.
 
 It does not deploy to any environment.
