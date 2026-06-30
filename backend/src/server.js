@@ -30,6 +30,13 @@ async function ensureTable() {
   await db.end();
 }
 
+app.get("/live", (req, res) => {
+  res.json({
+    status: "ok",
+    service: "backend",
+  });
+});
+
 app.get("/health", async (req, res) => {
   try {
     const db = await getDb();

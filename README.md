@@ -1,53 +1,96 @@
-# Full Stack DevOps + Kubernetes Demo
+# Resilient Full-Stack Kubernetes Demo
 
-מערכת לימודית פשוטה כדי להבין DevOps:
+A DevOps-oriented full-stack deployment demo for a small task application.
 
-- React Frontend
-- Node/Express Backend
-- MySQL
-- Docker Compose
-- Nginx Reverse Proxy
-- Kubernetes manifests
-- GitHub Actions CI
+The project demonstrates how a React frontend, Node.js/Express backend, MySQL database, Nginx reverse proxy, Docker Compose environment, Kubernetes manifests, health checks, and CI workflow fit together in a simplified but realistic portfolio project.
 
-## Local Docker Compose
+This is not a production system. It is intentionally small so the deployment, orchestration, and debugging workflow stays clear.
+
+## Architecture Overview
+
+```mermaid
+flowchart LR
+    user[User] --> entry[Nginx / Ingress]
+    entry --> frontend[Frontend<br/>React + Nginx]
+    entry --> backend[Backend API<br/>Node.js + Express]
+    frontend --> backend
+    backend --> mysql[(MySQL)]
+    mysql --> pvc[Persistent Volume Claim]
+
+    ci[GitHub Actions CI] --> deps[Install dependencies]
+    deps --> appBuild[Build frontend]
+    appBuild --> dockerBuild[Build Docker images]
+    dockerBuild --> yamlCheck[Validate Docker Compose and Kubernetes manifests]
+    yamlCheck --> manifests[Kubernetes manifests]
+```
+
+Local traffic goes through Nginx on `http://localhost:8080`. Kubernetes traffic goes through the Ingress host `devops-demo.local`.
+
+## Tech Stack
+
+- Frontend: React, Vite, Nginx
+- Backend: Node.js, Express, mysql2
+- Database: MySQL 8
+- Local orchestration: Docker Compose
+- Reverse proxy: Nginx
+- Kubernetes: Deployments, Services, Ingress, ConfigMap, Secret, PVC
+- CI: GitHub Actions
+
+## Project Structure
+
+```text
+.
+|-- .github/workflows/ci.yml
+|-- backend/
+|   |-- Dockerfile
+|   |-- .env.example
+|   `-- src/server.js
+|-- docs/
+|   |-- DEVOPS_NOTES.md
+|   |-- PRODUCTION_IMPROVEMENTS.md
+|   `-- RUNBOOK.md
+|-- frontend/
+|   |-- Dockerfile
+|   |-- .env.example
+|   `-- src/
+|-- k8s/
+|   |-- configmap.yml
+|   |-- secret.example.yml
+|   |-- mysql-pvc.yml
+|   |-- mysql-deployment.yml
+|   |-- mysql-service.yml
+|   |-- backend-deployment.yml
+|   |-- backend-service.yml
+|   |-- frontend-deployment.yml
+|   |-- frontend-service.yml
+|   `-- ingress.yml
+|-- nginx/nginx.conf
+|-- docker-compose.yml
+|-- Makefile
+`-- README.md
+```
+
+## Local Docker Compose Flow
+
+Start the full local stack:
 
 ```bash
 docker compose up -d --build
 ```
 
-Open:
+Open the app:
 
 ```text
 http://localhost:8080
 ```
 
-Health check:
-
-```bash
-curl http://localhost:8080/health
-```
-
-API:
-
-```bash
-curl http://localhost:8080/api/tasks
-```
-
-Logs:
-
-```bash
-docker compose logs backend
-docker compose logs nginx
-```
-
-Stop without deleting DB volume:
+Stop containers while keeping the MySQL volume:
 
 ```bash
 docker compose down
 ```
 
-Danger: deletes volumes:
+Reset local database data:
 
 ```bash
 docker compose down -v
@@ -55,124 +98,191 @@ docker compose down -v
 
 ## Kubernetes Flow
 
-Main idea:
+The Kubernetes manifests demonstrate a typical deployment shape:
 
-```text
-User
-↓
-Ingress
-↓
-Service
-↓
-Pod
-↓
-Container
+- Frontend and backend run as Deployments.
+- Internal traffic uses Kubernetes Services.
+- External HTTP routing uses Ingress.
+- Non-sensitive configuration is stored in a ConfigMap.
+- Sensitive values are represented by a safe Secret example.
+- MySQL stores data through a Persistent Volume Claim.
+- Frontend, backend, and MySQL include readiness/liveness probes.
+- Containers include basic resource requests and limits.
+
+Before applying to a cluster, create a local secret file:
+
+```bash
+cp k8s/secret.example.yml k8s/secret.yml
+# edit k8s/secret.yml locally and do not commit real secrets
 ```
 
-App flow:
+Apply manifests:
 
-```text
-User
-↓
-Ingress
-├── /       → frontend-service → frontend Pods
-├── /api    → backend-service  → backend Pods
-└── /health → backend-service  → backend Pods
-                              ↓
-                         mysql-service
-                              ↓
-                         mysql Pod + PVC
+```bash
+kubectl apply -f k8s/
 ```
 
-## Important Kubernetes files
+Check status:
 
-```text
-k8s/configmap.yml            non-sensitive config
-k8s/secret.example.yml       template for secrets (copy to secret.yml locally, never commit secret.yml)
-k8s/mysql-pvc.yml            persistent MySQL storage
-k8s/mysql-deployment.yml     runs MySQL pod
-k8s/mysql-service.yml        internal MySQL address
-k8s/backend-deployment.yml   runs backend pods
-k8s/backend-service.yml      internal backend address
-k8s/frontend-deployment.yml  runs frontend pods
-k8s/frontend-service.yml     internal frontend address
-k8s/ingress.yml              external routing
+```bash
+kubectl get pods
+kubectl get services
+kubectl get ingress
+kubectl get pvc
 ```
 
-## Before Kubernetes apply
-
-You must build and push images, or load them into Minikube/Kind.
-
-Current placeholder images:
+The Kubernetes image names are placeholders:
 
 ```text
 arie/fullstack-backend:v1
 arie/fullstack-frontend:v1
 ```
 
-Replace `arie` with your Docker Hub username or GHCR path.
+For a real cluster, build and push images to your registry, then update the image names in the deployment manifests.
 
-## Example Docker Hub flow
+## Useful Commands
 
-```bash
-docker build -t YOUR_DOCKERHUB_USER/fullstack-backend:v1 ./backend
-docker build -t YOUR_DOCKERHUB_USER/fullstack-frontend:v1 ./frontend
-
-docker push YOUR_DOCKERHUB_USER/fullstack-backend:v1
-docker push YOUR_DOCKERHUB_USER/fullstack-frontend:v1
-```
-
-Then update:
-
-```text
-k8s/backend-deployment.yml
-k8s/frontend-deployment.yml
-```
-
-## Kubernetes apply
-
-Before applying, create your local secret file (never commit this):
+With Make:
 
 ```bash
-cp k8s/secret.example.yml k8s/secret.yml
-# edit k8s/secret.yml with real values
+make compose-up
+make compose-down
+make compose-build
+make compose-logs
+make health
+make k8s-apply
+make k8s-status
+make k8s-delete
 ```
 
+Without Make:
+
 ```bash
+docker compose up -d --build
+docker compose logs -f
+curl http://localhost:8080/health
 kubectl apply -f k8s/
+kubectl get pods,svc,ingress,pvc
 ```
 
-Check:
+## Debugging Commands
+
+Docker Compose:
 
 ```bash
-kubectl get pods
-kubectl get services
-kubectl get ingress
+docker compose ps
+docker compose logs -f backend
+docker compose logs -f frontend
+docker compose logs -f mysql
+docker compose logs -f nginx
 ```
 
-Logs:
-
-```bash
-kubectl logs deployment/backend-deployment
-```
-
-Debug:
+Kubernetes:
 
 ```bash
 kubectl describe pod POD_NAME
+kubectl logs deployment/backend-deployment
+kubectl logs deployment/frontend-deployment
+kubectl logs deployment/mysql-deployment
+kubectl describe ingress fullstack-ingress
 ```
 
-## What this project teaches
+More troubleshooting examples are in [docs/RUNBOOK.md](docs/RUNBOOK.md).
 
-- Dockerfile
-- Docker Compose
-- Nginx reverse proxy
-- MySQL volume
-- Kubernetes Deployment
-- Kubernetes Service
-- Kubernetes Ingress
-- ConfigMap and Secret
-- PVC
-- Logs
-- Health checks
-- CI build
+## Health Check Examples
+
+Backend readiness through the public local proxy:
+
+```bash
+curl http://localhost:8080/health
+```
+
+Backend API:
+
+```bash
+curl http://localhost:8080/api/tasks
+```
+
+Kubernetes probes:
+
+- Backend liveness: `/live`
+- Backend readiness: `/health`
+- Frontend readiness/liveness: `/`
+- MySQL readiness/liveness: `mysqladmin ping`
+
+## CI Workflow
+
+The GitHub Actions workflow is intentionally practical and simple:
+
+- Checks out the code.
+- Installs backend dependencies.
+- Installs frontend dependencies.
+- Builds the frontend.
+- Validates Docker Compose config.
+- Runs a client-side Kubernetes manifest dry run.
+- Builds backend and frontend Docker images.
+
+It does not deploy to any environment.
+
+## Screenshots
+
+Place screenshots here when presenting the project:
+
+- Local app running at `http://localhost:8080`
+- `docker compose ps` showing healthy services
+- Backend health response
+- Kubernetes pods and services
+- GitHub Actions CI run
+
+## What Is Production-Like In This Project
+
+- Clear separation between app code and infrastructure files.
+- Containerized frontend and backend services.
+- Local orchestration with Docker Compose.
+- Nginx reverse proxy in front of app services.
+- Kubernetes Deployments, Services, Ingress, ConfigMap, Secret, and PVC.
+- Health checks for local and Kubernetes workflows.
+- Basic resource requests and limits.
+- CI that builds and validates the project.
+- Runbook-style troubleshooting documentation.
+
+## What Is Intentionally Simplified
+
+- MySQL runs as a single container/pod.
+- Secrets are represented by a safe example file.
+- Images use placeholder registry names in Kubernetes.
+- There is no automated deployment from CI.
+- The app uses a small feature set to keep the focus on deployment.
+- Observability is limited to logs and health checks.
+
+## What Would Be Added For Real Production
+
+- TLS and HTTPS-only traffic.
+- A real secret manager.
+- Container image registry and promotion flow.
+- CI/CD deployment with approvals.
+- Monitoring, alerting, and centralized logs.
+- Backups and restore testing for the database.
+- Autoscaling for stateless services.
+- Security scanning and stricter runtime policies.
+- Environment separation for development, staging, and production.
+
+See [docs/PRODUCTION_IMPROVEMENTS.md](docs/PRODUCTION_IMPROVEMENTS.md) for more detail.
+
+## Why This Project Matters
+
+This project demonstrates practical DevOps thinking for a Junior / Junior+ full-stack developer:
+
+- Understanding of full-stack deployment flow.
+- Separation between application code and infrastructure configuration.
+- Docker-based local development environment.
+- Kubernetes deployment basics.
+- Health checks and debugging habits.
+- CI awareness without pretending to be a complete production platform.
+- Ability to explain tradeoffs clearly and honestly.
+
+## Recruiter-Friendly Summary
+
+This is a compact DevOps-oriented full-stack deployment demo. It shows a React frontend, Node.js backend, MySQL database, Docker Compose local environment, Nginx routing, Kubernetes manifests, health checks, persistent storage, CI, and troubleshooting documentation.
+
+The project is intentionally simplified, but it reflects production-like patterns that are common in real teams.
