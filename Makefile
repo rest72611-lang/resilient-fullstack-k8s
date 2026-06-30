@@ -5,7 +5,7 @@ KUBECTL = kubectl
 .PHONY: k8s-apply k8s-delete k8s-status k8s-logs-backend k8s-logs-frontend k8s-logs-mysql
 
 compose-up:
-	$(COMPOSE) up -d --build
+	$(COMPOSE) up --build
 
 compose-down:
 	$(COMPOSE) down
@@ -26,7 +26,7 @@ mysql-logs:
 	$(COMPOSE) logs -f mysql
 
 health:
-	curl http://localhost:8080/health
+	curl http://localhost:8080/health || true
 
 k8s-apply:
 	$(KUBECTL) apply -f k8s/

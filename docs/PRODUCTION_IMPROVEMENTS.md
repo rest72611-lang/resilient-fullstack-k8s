@@ -16,5 +16,6 @@ In a real production environment, the following would be added or strengthened:
 - More careful resource tuning based on load testing.
 - Security scanning for dependencies, containers, and Kubernetes manifests.
 - Network policies and stricter runtime security contexts.
+- Explicit Ingress controller configuration and managed load balancer settings.
 - Separate environments for development, staging, and production.
 - Managed database or a more robust stateful database setup.

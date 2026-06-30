@@ -65,6 +65,7 @@ Local traffic goes through Nginx on `http://localhost:8080`. Kubernetes traffic 
 |   |-- frontend-service.yml
 |   `-- ingress.yml
 |-- nginx/nginx.conf
+|-- screenshots/
 |-- docker-compose.yml
 |-- Makefile
 `-- README.md
@@ -226,13 +227,13 @@ It does not deploy to any environment.
 
 ## Screenshots
 
-Place screenshots here when presenting the project:
+Screenshots should be added after running the project locally. The repository includes a `screenshots/` folder with a `.gitkeep` placeholder so real screenshots can be added later.
 
-- Local app running at `http://localhost:8080`
-- `docker compose ps` showing healthy services
-- Backend health response
-- Kubernetes pods and services
-- GitHub Actions CI run
+- `screenshots/app-ui.png` - local app running at `http://localhost:8080`
+- `screenshots/docker-compose-ps.png` - `docker compose ps` showing healthy services
+- `screenshots/health-check.png` - backend health response
+- `screenshots/k8s-pods.png` - Kubernetes pods and services
+- `screenshots/github-actions-success.png` - GitHub Actions CI run
 
 ## What Is Production-Like In This Project
 
@@ -276,10 +277,14 @@ This project demonstrates practical DevOps thinking for a Junior / Junior+ full-
 - Understanding of full-stack deployment flow.
 - Separation between application code and infrastructure configuration.
 - Docker-based local development environment.
+- Nginx reverse proxy routing.
 - Kubernetes deployment basics.
+- Config and secret separation.
+- Persistent database storage.
 - Health checks and debugging habits.
+- Logs and troubleshooting.
 - CI awareness without pretending to be a complete production platform.
-- Ability to explain tradeoffs clearly and honestly.
+- Practical DevOps mindset.
 
 ## Recruiter-Friendly Summary
 

@@ -2,6 +2,10 @@
 
 This project is a DevOps-oriented full-stack deployment demo. It keeps the application small so the deployment and debugging flow stays easy to understand.
 
+## Docker
+
+Docker packages each service with the runtime and dependencies it needs. In this project, the backend runs in a Node.js image and the frontend is built with Node.js, then served by Nginx.
+
 ## Docker Compose
 
 Docker Compose runs the local stack with MySQL, backend, frontend, and Nginx. It gives a repeatable local environment without installing every service directly on the host machine.
@@ -18,11 +22,11 @@ Nginx is the public entry point in the Compose setup. It routes:
 
 This matches a common deployment pattern where one HTTP entry point hides internal service details.
 
-## Kubernetes Deployments
+## Kubernetes Deployment
 
 Deployments describe how each application component should run in Kubernetes. The frontend and backend use two replicas to demonstrate how stateless services can be duplicated. MySQL uses one replica because this demo does not implement database clustering.
 
-## Services
+## Kubernetes Service
 
 Services provide stable internal DNS names for pods:
 
@@ -32,15 +36,15 @@ Services provide stable internal DNS names for pods:
 
 The backend connects to MySQL through `mysql-service`, not a pod IP.
 
-## Ingress
+## Kubernetes Ingress
 
 Ingress defines external HTTP routing into the cluster. In this project it routes `devops-demo.local` traffic to the frontend and backend services.
 
-## ConfigMaps
+## ConfigMap
 
 ConfigMaps store non-sensitive configuration such as database host, database name, and backend port.
 
-## Secrets
+## Secret
 
 Secrets are used for sensitive values such as database passwords. The repository includes only `secret.example.yml`; real secret files should be created locally and not committed.
 
@@ -66,6 +70,6 @@ docker compose logs -f backend
 kubectl logs deployment/backend-deployment
 ```
 
-## CI
+## GitHub Actions CI
 
 GitHub Actions installs dependencies, builds the frontend, builds Docker images, and checks Kubernetes YAML with a client-side dry run. It does not deploy anywhere.

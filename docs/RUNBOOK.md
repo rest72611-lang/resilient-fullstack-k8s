@@ -69,6 +69,25 @@ docker compose logs -f backend
 
 Confirm service names in `nginx/nginx.conf` match the Compose service names.
 
+## Docker Container Keeps Restarting
+
+Check which service is restarting:
+
+```bash
+docker compose ps
+docker compose logs -f backend
+docker compose logs -f frontend
+docker compose logs -f mysql
+```
+
+Inspect the container health check:
+
+```bash
+docker inspect demo-backend
+docker inspect demo-frontend
+docker inspect demo-mysql
+```
+
 ## Kubernetes Pod Is CrashLoopBackOff
 
 Describe the pod and read logs:
@@ -80,6 +99,25 @@ kubectl logs POD_NAME --previous
 ```
 
 Common causes are missing secrets, wrong image names, bad environment variables, or failing startup commands.
+
+## Kubernetes Service Is Not Reachable
+
+Check that the service selector matches pod labels:
+
+```bash
+kubectl get pods --show-labels
+kubectl get svc
+kubectl describe svc backend-service
+kubectl describe svc frontend-service
+kubectl describe svc mysql-service
+```
+
+If using Ingress, check the route:
+
+```bash
+kubectl get ingress
+kubectl describe ingress fullstack-ingress
+```
 
 ## MySQL Data Is Missing
 
@@ -102,6 +140,25 @@ kubectl get pvc
 kubectl describe pvc mysql-pvc
 ```
 
+## Check Environment Variables
+
+Compose:
+
+```bash
+docker compose exec backend env
+docker compose exec mysql env
+```
+
+Kubernetes:
+
+```bash
+kubectl describe deployment backend-deployment
+kubectl get configmap app-config -o yaml
+kubectl get secret app-secret -o yaml
+```
+
+Do not paste real secret values into public issues, documentation, or commits.
+
 ## Inspect Logs
 
 Compose:
@@ -120,7 +177,7 @@ kubectl logs deployment/frontend-deployment
 kubectl logs deployment/mysql-deployment
 ```
 
-## Check Ports And Services
+## Check Ports
 
 Compose:
 
@@ -136,3 +193,22 @@ kubectl get svc
 kubectl get ingress
 kubectl describe ingress fullstack-ingress
 ```
+
+## Restart The System Safely
+
+Compose restart without deleting database volume:
+
+```bash
+docker compose down
+docker compose up -d --build
+```
+
+Kubernetes restart without deleting the PVC:
+
+```bash
+kubectl rollout restart deployment/backend-deployment
+kubectl rollout restart deployment/frontend-deployment
+kubectl rollout restart deployment/mysql-deployment
+```
+
+Only delete volumes or PVCs when you intentionally want to reset data.
